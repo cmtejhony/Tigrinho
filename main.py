@@ -26,7 +26,7 @@ def reset_game():
     slots = [random.choice(SYMBOLS) for _ in range(3)]
     game_over = False
     is_spinning = False
-    spin_star_time = 0
+    spin_start_time = 0
 
 reset_game()
 
@@ -51,7 +51,7 @@ def change_bet(amount):
         bet = new_bet
 
 def start_spin():
-    global is spinning, spin_start_time, balance
+    global is_spinning, spin_start_time, balance
     if balance >= bet and not is_spinning:
         balance -= bet
         is_spinning = True
@@ -62,8 +62,10 @@ def finish_spin():
     slots = [random.choice(SYMBOLS) for _ in range(3)]
     if slots.count(slots[0]) == 3:
         prize = bet * cfg.PRIZE_MULTIPLIERS[slots[0]]
-        
-       
+        balance += prize
+    if balance < cfg.MIN_BET:
+        game_over = True
+    is_spinning = False
 
 running = True
 while running:
@@ -71,6 +73,12 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
+    if is_spinning:
+        if time.time() - spin_start_time >= 1:
+            finish_spin()
+        else:
+            slots = [random.choice(SYMBOLS) for _ in range(3)]
 
     for i, sym in enumerate(slots):
         img = pygame.transform.scale(IMAGES[sym], (cfg.SLOT_SIZE, cfg.SLOT_SIZE))
@@ -83,7 +91,7 @@ while running:
         draw_text("Você perdeu tudo!", 300, 140, FONT, cfg.RED)
         draw_button("REINICIAR", 50, 120, 140, 40, cfg.RED, reset_game)
     else:
-        draw_button("GIRAR", 50, 120, 100, 40, cfg.GREEN, spin)
+        draw_button("GIRAR", 50, 120, 100, 40, cfg.GREEN, start_spin)
         draw_button("+", 160, 120, 40, 40, cfg.GRAY, lambda: change_bet(10))
         draw_button("-", 210, 120, 40, 40, cfg.GRAY, lambda: change_bet(-10))
 
